@@ -4,38 +4,28 @@
 */
 
 const jwt = require("jsonwebtoken")
+const secKeys = require("../api/secKeys")
 
-function auth() {
-  const roles = ["user", "contributor"]
-  return async (req, res, next)=> {
-    const authError = {
-      message: "Invalid Credentials"
-    }
-    try{
-      const token = req.cookies.token
-      if(!token) {
-        return res.status(401).json(authError)
-      }
-      jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if(err) {
-          return res.status(401).json(authError)
-        }
-        if (role && roles.indexOf(decoded.userRole) < roles.indexOf(role)) {
-          return res.status(403).json({
-            message: "Invalid Credentials"
-          })
-        }
-        req.token = decoded
-
-        next()
+module.exports = (req, res, next) => {
+  try{
+    const token = req.headers.authorization
+    if (!token) {
+      return res.status(401).json({
+        message: " Invalid Credentials"
       })
+    }
 
+    jwt.verify(token, secKeys.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({
+          message: "Invalid Credentials"
+        })
+      }
+      req.token = decoded
 
       next()
-    }catch(err){
-      next(err)
-    }
+    })
+  }catch (err) {
+    next(err)
   }
 }
-
-module.exports = auth

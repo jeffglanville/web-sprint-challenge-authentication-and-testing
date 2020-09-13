@@ -1,10 +1,8 @@
-const express = require("express")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const router = require("express").Router();
 const Users = require("./auth-model")
-const auth = require("../auth/authenticate-middleware")
-
-const router = express.Router();
+const secKey = require("../api/secKeys");
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -27,7 +25,7 @@ router.post('/register', async (req, res, next) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   try{
     const { username, password } = req.body
     const user = await Users.findBy({ username }).first()
@@ -45,15 +43,14 @@ router.post('/login', async (req, res) => {
       })
     }
 
-    const token = jwt.sign({
+    const payload = {
       userId: user.id,
-      userRole: "contributor"
-    }, process.env.JWT_SECRET)
-
-    res.cookie("token", token)
+      username: user.username
+    }
 
     res.json({
-      message: `Welcome ${user.username}`
+      message: `Welcome ${user.username}`,
+      token: jwt.sign(payload, secKey.JWT_SECRET)
     })
 
   }catch(err) {
